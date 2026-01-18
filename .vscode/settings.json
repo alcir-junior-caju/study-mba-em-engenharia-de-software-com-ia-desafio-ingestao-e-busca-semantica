@@ -1,0 +1,28 @@
+{
+  // Python
+  "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportUnusedVariable": "warning",
+    "reportUnusedImport": "warning",
+    "reportMissingImports": "error"
+  },
+
+  // Ruff
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+
+  // Pylance/Pyright
+  "python.languageServer": "Pylance",
+
+  // Editor
+  "editor.rulers": [100],
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true
+}

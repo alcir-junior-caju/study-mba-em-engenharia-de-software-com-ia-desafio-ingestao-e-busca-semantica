@@ -1,5 +1,7 @@
 """Utilidades para CLI com Rich."""
 
+import logging
+
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.markdown import Markdown
@@ -7,18 +9,20 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 from rich.theme import Theme
-import logging
 
 # Tema customizado
-custom_theme = Theme({
-    "info": "cyan",
-    "warning": "yellow",
-    "error": "red bold",
-    "success": "green bold",
-})
+custom_theme = Theme(
+    {
+        "info": "cyan",
+        "warning": "yellow",
+        "error": "red bold",
+        "success": "green bold",
+    }
+)
 
 # Console global com tema
 console = Console(theme=custom_theme)
+
 
 # Configurar logging com Rich
 def setup_logging(level: str = "INFO"):
@@ -27,11 +31,13 @@ def setup_logging(level: str = "INFO"):
         level=level,
         format="%(message)s",
         datefmt="[%X]",
-        handlers=[RichHandler(
-            console=console,
-            rich_tracebacks=True,
-            show_path=False,
-        )]
+        handlers=[
+            RichHandler(
+                console=console,
+                rich_tracebacks=True,
+                show_path=False,
+            )
+        ],
     )
     return logging.getLogger("rich")
 
@@ -63,7 +69,7 @@ def print_warning(message: str):
 
 def print_info(message: str):
     """Exibe mensagem informativa."""
-    console.print(f"[info]ℹ[/info] {message}")
+    console.print(f"[info](i)[/info] {message}")
 
 
 def print_markdown(content: str):
@@ -129,9 +135,7 @@ def hello():
 
     # Painel
     print_panel(
-        "Este é um conteúdo importante\nque merece destaque!",
-        title="Importante",
-        style="yellow"
+        "Este é um conteúdo importante\nque merece destaque!", title="Importante", style="yellow"
     )
 
     # Tabela

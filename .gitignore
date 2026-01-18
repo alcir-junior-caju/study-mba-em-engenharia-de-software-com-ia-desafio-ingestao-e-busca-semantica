@@ -12,12 +12,23 @@ __pycache__
 *.pyd
 .Python
 
+# Ruff cache
+.ruff_cache/
+
+# Pyright cache
+.pyright/
+
 # uv
 .uv/
 uv.lock
 
 # IDEs
-.vscode/
+# Manter .vscode/ com configurações do projeto, mas ignorar arquivos pessoais
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 .idea/
 *.swp
 *.swo

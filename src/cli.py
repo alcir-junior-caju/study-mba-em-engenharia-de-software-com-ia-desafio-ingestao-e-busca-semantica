@@ -1,25 +1,26 @@
 """CLI principal usando Typer e Rich."""
 
 import os
-import typer
-from typing_extensions import Annotated
 from pathlib import Path
+from typing import Annotated
+
+import typer
 from dotenv import load_dotenv
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from langchain_postgres import PGVector
 from langchain.prompts import PromptTemplate
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.output_parsers import StrOutputParser
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_postgres import PGVector
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from cli_utils import (
     console,
-    setup_logging,
-    print_header,
-    print_success,
     print_error,
+    print_header,
     print_info,
+    print_success,
     progress_spinner,
+    setup_logging,
 )
 
 load_dotenv()
@@ -44,7 +45,7 @@ PDF_PATH = os.getenv("PDF_PATH", "./document.pdf")
 @app.command()
 def ingest(
     pdf_path: Annotated[
-        str,
+        str | None,
         typer.Option(
             "--pdf-path",
             "-p",
@@ -96,15 +97,15 @@ def ingest(
         print_info("Configurando embeddings do Gemini...")
         embeddings = GoogleGenerativeAIEmbeddings(
             model=EMBEDDING_MODEL,
-            google_api_key=GOOGLE_API_KEY
+            google_api_key=GOOGLE_API_KEY,  # type: ignore[arg-type]  # type: ignore[arg-type]
         )
         print_success(f"Embeddings configurados: {EMBEDDING_MODEL}")
 
         # 4. Armazenar no banco
         print_info("Armazenando no banco de dados...")
         with progress_spinner() as progress:
-            task = progress.add_task("[cyan]Salvando chunks...", total=None)
-            vectorstore = PGVector.from_documents(
+            progress.add_task("[cyan]Salvando chunks...", total=None)
+            PGVector.from_documents(
                 documents=chunks,
                 embedding=embeddings,
                 collection_name=COLLECTION_NAME,
@@ -118,7 +119,7 @@ def ingest(
     except Exception as e:
         print_error(f"Erro ao ingerir PDF: {e}")
         logger.exception("Erro detalhado:")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
@@ -141,7 +142,7 @@ def search(
         print_info("Configurando embeddings...")
         embeddings = GoogleGenerativeAIEmbeddings(
             model=EMBEDDING_MODEL,
-            google_api_key=GOOGLE_API_KEY
+            google_api_key=GOOGLE_API_KEY,  # type: ignore[arg-type]
         )
 
         # Conectar ao vector store
@@ -156,7 +157,7 @@ def search(
         # Buscar documentos similares
         print_info(f"Buscando top {top_k} documentos similares...")
         with progress_spinner() as progress:
-            task = progress.add_task("[cyan]Buscando...", total=None)
+            progress.add_task("[cyan]Buscando...", total=None)
             results = vectorstore.similarity_search_with_score(query, k=top_k)
 
         if not results:
@@ -165,22 +166,19 @@ def search(
 
         # Exibir resultados
         from rich.table import Table
+
         table = Table(title=f"Top {len(results)} Resultados", show_lines=True)
         table.add_column("Rank", style="cyan", width=6, justify="center")
         table.add_column("Score", style="magenta", width=10, justify="right")
         table.add_column("Conteúdo", style="white")
 
-        for idx, (doc, score) in enumerate(results, 1):
+        for idx, (doc, _score) in enumerate(results, 1):
             # Truncar conteúdo se for muito longo
             content = doc.page_content
             if len(content) > 200:
                 content = content[:200] + "..."
 
-            table.add_row(
-                str(idx),
-                f"{score:.4f}",
-                content
-            )
+            table.add_row(str(idx), f"{_score:.4f}", content)
 
         console.print()
         console.print(table)
@@ -189,7 +187,7 @@ def search(
     except Exception as e:
         print_error(f"Erro na busca: {e}")
         logger.exception("Erro detalhado:")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
@@ -207,7 +205,7 @@ def chat():
         print_info("Inicializando sistema...")
         embeddings = GoogleGenerativeAIEmbeddings(
             model=EMBEDDING_MODEL,
-            google_api_key=GOOGLE_API_KEY
+            google_api_key=GOOGLE_API_KEY,  # type: ignore[arg-type]
         )
 
         # Conectar ao vector store
@@ -221,7 +219,7 @@ def chat():
         # Configurar LLM
         llm = ChatGoogleGenerativeAI(
             model="gemini-2.0-flash-lite",
-            google_api_key=GOOGLE_API_KEY,
+            google_api_key=GOOGLE_API_KEY,  # type: ignore[arg-type]
             temperature=0,
         )
 
@@ -243,10 +241,7 @@ PERGUNTA DO USUÁRIO:
 RESPONDA A "PERGUNTA DO USUÁRIO"
 """
 
-        prompt = PromptTemplate(
-            template=PROMPT_TEMPLATE,
-            input_variables=["contexto", "pergunta"]
-        )
+        prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["contexto", "pergunta"])
 
         # Criar chain usando a nova sintaxe (RunnableSequence)
         chain = prompt | llm | StrOutputParser()
@@ -269,7 +264,7 @@ RESPONDA A "PERGUNTA DO USUÁRIO"
 
                 # Buscar contexto e gerar resposta
                 with progress_spinner() as progress:
-                    task = progress.add_task("[cyan]Buscando contexto e gerando resposta...", total=None)
+                    progress.add_task("[cyan]Buscando contexto e gerando resposta...", total=None)
 
                     # Buscar documentos relevantes
                     results = vectorstore.similarity_search_with_score(user_input, k=10)
@@ -278,14 +273,12 @@ RESPONDA A "PERGUNTA DO USUÁRIO"
                         resposta = "Não tenho informações necessárias para responder sua pergunta."
                     else:
                         # Concatenar contexto
-                        contexto = "\n\n".join([doc.page_content for doc, score in results])
+                        contexto = "\n\n".join([doc.page_content for doc, _score in results])
 
                         # Gerar resposta usando a nova sintaxe
-                        resposta = chain.invoke({
-                            "contexto": contexto,
-                            "pergunta": user_input
-                        })
+                        resposta = chain.invoke({"contexto": contexto, "pergunta": user_input})
                 from cli_utils import print_panel
+
                 print_panel(resposta, title="🤖 Assistente", style="green")
                 console.print()
 
@@ -297,7 +290,7 @@ RESPONDA A "PERGUNTA DO USUÁRIO"
     except Exception as e:
         print_error(f"Erro no chat: {e}")
         logger.exception("Erro detalhado:")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 if __name__ == "__main__":

@@ -463,12 +463,15 @@ A CLI usa **Rich** para fornecer output profissional:
 ```
 .
 ├── docker-compose.yml      # Configuração do PostgreSQL com pgvector
-├── pyproject.toml         # Configuração do projeto (dependências, metadados)
+├── pyproject.toml         # Configuração do projeto (dependências, Ruff, Pyright)
 ├── uv.lock                # Lock file de dependências
 ├── .python-version        # Versão do Python (3.13)
 ├── .env.example           # Exemplo de variáveis de ambiente
 ├── setup.sh               # Script de setup automático
 ├── README.md              # Este arquivo
+├── .vscode/               # Configurações do VS Code
+│   ├── settings.json     # Configurações do editor (Ruff, Pylance)
+│   └── extensions.json   # Extensões recomendadas
 ├── docs/                  # Documentação adicional
 │   ├── COMANDOS_UV.md    # Referência de comandos uv
 │   ├── CONTEXTO.md       # Contexto do desafio
@@ -492,7 +495,10 @@ A CLI usa **Rich** para fornecer output profissional:
 Arquivo principal de configuração do projeto usando o padrão PEP 518. Define:
 - Metadados do projeto
 - Dependências com versões fixadas
+- Dependências de desenvolvimento (Ruff, Pyright)
 - Configuração de build com Hatchling
+- Configuração do Ruff (linter/formatter)
+- Configuração do Pyright (type checker)
 - Configuração do `uv`
 
 ### uv.lock
@@ -539,9 +545,85 @@ Especifica a versão do Python a ser usada (3.13), permitindo que ferramentas co
 - **python-dotenv** - Gerenciamento de variáveis de ambiente
 - **Docker & Docker Compose** - Containerização
 
-### CLI & Interface (Opcional)
+### Qualidade de Código & Type Checking
+- **Ruff** - Linter e formatter Python ultrarrápido (escrito em Rust)
+- **Pyright** - Type checker estático para Python
+- **Pylance** - Extensão VS Code com Pyright integrado
+
+### CLI & Interface
 - **Typer** - Framework para CLIs modernas
 - **Rich** - Formatação bonita de output no terminal
+
+## 🔍 Qualidade de Código
+
+O projeto utiliza ferramentas modernas para garantir a qualidade do código:
+
+### Ruff - Linter e Formatter
+
+Ruff é um linter e formatter extremamente rápido escrito em Rust, substituindo ferramentas como Black, isort, flake8, e pyupgrade.
+
+```bash
+# Verificar código (linting)
+uv run ruff check src/
+
+# Verificar e corrigir automaticamente
+uv run ruff check --fix src/
+
+# Formatar código
+uv run ruff format src/
+
+# Verificar tudo (lint + format)
+uv run ruff check src/ && uv run ruff format src/
+```
+
+**Configuração**: As regras do Ruff estão configuradas no [pyproject.toml](pyproject.toml) na seção `[tool.ruff]`.
+
+### Pyright - Type Checker
+
+Pyright é um verificador de tipos estático de alto desempenho para Python.
+
+```bash
+# Verificar tipos em todo o projeto
+uv run pyright
+
+# Verificar um arquivo específico
+uv run pyright src/cli.py
+```
+
+**Configuração**: As configurações do Pyright estão no [pyproject.toml](pyproject.toml) na seção `[tool.pyright]`.
+
+### Pylance (VS Code)
+
+Se você usa VS Code, a extensão **Pylance** oferece:
+- ✅ Type checking em tempo real
+- ✅ IntelliSense avançado
+- ✅ Auto-complete inteligente
+- ✅ Detecção de erros
+- ✅ Refatoração automática
+
+**Extensões Recomendadas**:
+O projeto inclui configurações do VS Code em [.vscode/](.vscode/) com as extensões recomendadas:
+- **Python** (`ms-python.python`)
+- **Pylance** (`ms-python.vscode-pylance`)
+- **Ruff** (`charliermarsh.ruff`)
+
+Ao abrir o projeto no VS Code, você receberá uma notificação para instalar essas extensões.
+
+### Comandos Úteis
+
+```bash
+# Instalar dependências de desenvolvimento
+uv sync --group dev
+
+# Rodar todas as verificações
+uv run ruff check src/
+uv run ruff format --check src/
+uv run pyright
+
+# Corrigir problemas automaticamente
+uv run ruff check --fix src/
+uv run ruff format src/
+```
 
 ## Variáveis de Ambiente
 

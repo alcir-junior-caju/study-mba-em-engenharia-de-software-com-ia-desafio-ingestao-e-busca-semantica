@@ -1,9 +1,10 @@
 import os
+
 from dotenv import load_dotenv
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from langchain_postgres import PGVector
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_postgres import PGVector
 
 load_dotenv()
 
@@ -60,7 +61,7 @@ def search_prompt(question=None):
         # Configurar embeddings
         embeddings = GoogleGenerativeAIEmbeddings(
             model=EMBEDDING_MODEL,
-            google_api_key=GOOGLE_API_KEY
+            google_api_key=GOOGLE_API_KEY,  # type: ignore[arg-type]
         )
 
         # Conectar ao vector store
@@ -79,10 +80,7 @@ def search_prompt(question=None):
         )
 
         # Criar prompt template
-        prompt = PromptTemplate(
-            template=PROMPT_TEMPLATE,
-            input_variables=["contexto", "pergunta"]
-        )
+        prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["contexto", "pergunta"])
 
         # Criar chain usando a nova sintaxe (RunnableSequence)
         chain = prompt | llm | StrOutputParser()
@@ -104,13 +102,10 @@ def search_prompt(question=None):
                 return "Não tenho informações necessárias para responder sua pergunta."
 
             # Concatenar o contexto dos resultados
-            contexto = "\n\n".join([doc.page_content for doc, score in results])
+            contexto = "\n\n".join([doc.page_content for doc, _score in results])
 
             # Gerar resposta usando a nova sintaxe
-            resposta = chain.invoke({
-                "contexto": contexto,
-                "pergunta": user_question
-            })
+            resposta = chain.invoke({"contexto": contexto, "pergunta": user_question})
 
             return resposta
 
@@ -124,5 +119,6 @@ def search_prompt(question=None):
     except Exception as e:
         print(f"❌ ERRO ao configurar busca: {e}")
         import traceback
+
         traceback.print_exc()
         return None
